@@ -1,19 +1,42 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const lib = require('pipedrive');
+const lib = require("pipedrive");
+var mysql = require("mysql");
+lib.Configuration.apiToken = "da8dbcc3866222ea70cdb7b28f4c278788a04779";
 
-const PORT = 1800;
-
-lib.Configuration.apiToken = 'da8dbcc3866222ea70cdb7b28f4c278788a04779';
-
-app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
+var con = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "iqrate",
 });
 
-input = [];
+const sqlConnect = () => {
+  con.connect(function (error) {
+    if (error) throw error;
+    console.log("Connected!");
+  });
+}
 
-app.get('/', async (req, res) => {
-    const user = await lib.OrganizationsController.getAllOrganizations(input, (error, response, context) => {});
+const closeConnection = function () {
+  con.end(function(error) {
+  if (errpr) throw error;
+  console.log('Close the database connection.');
+})};
 
-    res.send(user);
-});
+const addOrganizations = () => {
+    const user = lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
+      if (error) throw error;
+      response.data.forEach(addToDatabase);
+    });
+};
+
+const addToDatabase = ({ id, name, address_formatted_address: address }) => {
+  var sql = "INSERT INTO organizations (id, name, address) VALUES (?, ?, ?)";
+  con.query(sql, [ id, name, address ], function (error, result) {
+    if (error) throw error;
+  });
+};
+
+sqlConnect();
+addOrganizations();
