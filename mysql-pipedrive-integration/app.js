@@ -1,59 +1,39 @@
-const lib = require("pipedrive");
-var mysql = require("mysql");
-const { response } = require("express");
-lib.Configuration.apiToken = "da8dbcc3866222ea70cdb7b28f4c278788a04779";
+const { response } = require('express');
+// imports DB connector (send queries asynchronously using DB.sendQuery(query, params))
+const DB = require('./connectors/db_connector');
+// imports pipedrive api connector
+const Pipedrive = require('./connectors/pipedrive_connector');
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "iqrate",
-});
-
-const sqlConnect = () => {
-  con.connect(function (error) {
-    if (error) throw error;
-    console.log("Connected!");
-  });
-}
-
-const closeConnection = function () {
-  con.end(function(error) {
-  if (error) throw error;
-  console.log('Close the database connection.');
-})};
-
+/* Copies all organisations from pipedrive to MYSQL DB*/
 const addOrganizations = () => {
-     sqlConnect();
-    const user = lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
-      if (error) throw error;
-      response.data.forEach(addToDatabase);
-    });
-};
+  // change any of nulls, to start filtering data
+  const input = {
+    userId: null,
+    filterId: null,
+    firstChar: null,
+    start: null,
+    limit: null,
+    sort: null,
+  };
 
-const checkDuplicates = (id, callback) => {
-  var sql = "SELECT id FROM organizations WHERE id = ?";
-  con.query(sql, [id], function (error, result){
-    if (error) throw error;
-    callback(result.length === 0);
-  });
-}
-
-const addToDatabase = ({ id, name, address_formatted_address: address }) => {
- 
-  //if organization (id) isn't already in db then add
-  checkDuplicates(id, function(result){
-    if (result){
-      var sql = "INSERT INTO organizations (id, name, address) VALUES (?, ?, ?)";
-      con.query(sql, [ id, name, address ], function (error, result) {
-        if (error) throw error;
-        console.log("organization added");
-      });
-    } else{
-      console.log("organization already in database");
+  Pipedrive.OrganizationsController.getAllOrganizations(
+    input,
+    (err, res, context) => {
+      if (err) throw err;
+      // build up array of data [[id, name, address]] and then insert everything into DB
+      values = [];
+      res.data.map(({ id, name, address_formatted_address: address }) =>
+        values.push([id, name, address])
+      );
+      DB.sendQuery(
+        'INSERT IGNORE INTO organizations(id, name, address) VALUES ?',
+        [values]
+      )
+        .then((res) => console.log('Organizations added'))
+        .catch((err) => console.log('Error occured : ' + err.message));
     }
-  });
-
+  );
 };
 
+// run addOrganizations function
 addOrganizations();

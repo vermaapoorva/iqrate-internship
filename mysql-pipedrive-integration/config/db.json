@@ -1,0 +1,6 @@
+{
+    "database" : "iqrate",
+    "host": "localhost",
+    "user": "root",
+    "password": ""
+}
