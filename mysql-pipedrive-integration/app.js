@@ -21,20 +21,14 @@ const sqlConnect = () => {
 const closeConnection = function () {
   con.end(function(error) {
   if (error) throw error;
-  console.log('Closed the database connection.');
+  console.log('Close the database connection.');
 })};
 
-async function addOrganizations(){
-  try {
-      sqlConnect();
-      const user = await lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
+const addOrganizations = () => {
+    const user = lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
       if (error) throw error;
       response.data.forEach(addToDatabase);
     });
-  }
-  finally{
-    closeConnection();
-  }
 };
 
 const addToDatabase = ({ id, name, address_formatted_address: address }) => {
@@ -44,4 +38,5 @@ const addToDatabase = ({ id, name, address_formatted_address: address }) => {
   });
 };
 
+sqlConnect();
 addOrganizations();
