@@ -20,14 +20,20 @@ const sqlConnect = () => {
 const closeConnection = function () {
   con.end(function(error) {
   if (error) throw error;
-  console.log('Close the database connection.');
+  console.log('Closed the database connection.');
 })};
 
-const addOrganizations = () => {
-    const user = lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
+async function addOrganizations(){
+  try {
+      sqlConnect();
+      const user = await lib.OrganizationsController.getAllOrganizations([], (error, response, context) => {
       if (error) throw error;
       response.data.forEach(addToDatabase);
     });
+  }
+  finally{
+    closeConnection();
+  }
 };
 
 const checkDuplicates = (id, callback) => {
@@ -55,5 +61,4 @@ const addToDatabase = ({ id, name, address_formatted_address: address }) => {
 
 };
 
-sqlConnect();
 addOrganizations();
