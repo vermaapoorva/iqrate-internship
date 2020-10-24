@@ -21,7 +21,7 @@ async function searchLocation(page, location) {
 }
 
 // scrape the results and return an array of all the hotels currently on the site
-const scrape = async (page, outputFile, location) => {
+async function scrape(page, outputFile, location) {
   var results = [];
   const lastPageNumber = await getLastPageNumber(page);
   // loop through all pages and get hotels
